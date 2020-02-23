@@ -54,7 +54,7 @@ _login() {
         -F "password=\"$freenom_passwd\"" \
         -F "token=$authToken" \
         "https://my.freenom.com/dologin.php")"
-        if [ -z "$(echo -e "$loginResult" | grep -E "Location: /clientarea.php\?incorrect=true|Login Details Incorrect")" ]; then
+        if ! grep -q "$(echo -e "$loginResult" | grep -E "Location: /clientarea.php\?incorrect=true|Login Details Incorrect")"; then
             break
         else
             if [ "$counter" -eq "$httpAttempts" ]; then
@@ -103,17 +103,6 @@ _splitDomain() {
     fi
 }
 
-_searchDNSRecord() {
-    for (( i=1; i<=${#dnsInfo[@]}; i+=4 )); do
-        if [[ "$(echo "${dnsInfo[$i]}." | tr [[:upper:]] [[:lower:]])" = "$subdomain" ]]; then
-            subdomainIndex="$i"
-            subdomainValue="${dnsInfo[$i+2]}"
-            ((recordIndex=$i/4))
-            break
-        fi
-    done
-}
-
 _checkDNSRecord() {
     printf "[HOOK_INFO]: Waiting for DNS update..."
     minutes=1
@@ -136,7 +125,7 @@ _addDNSRecord() {
         -F "addrecord[0][value]=${dnsToken}" \
         -F "token=$authToken" \
         "https://my.freenom.com/clientarea.php?managedns=${domain}&domainid=${domainId}")
-    if [ -z "$(echo -e "$addResult" | grep "<li class=\"dnssuccess\">Record added successfully</li>")" ]; then
+    if ! grep -q "$(echo -e "$addResult" | grep "<li class=\"dnssuccess\">Record added successfully</li>")"; then
         echo "[HOOK_ERROR]: DNS record was not added!"
     fi
     echo "[HOOK_INFO]: DNS record was successfully added"
@@ -150,7 +139,6 @@ case "$1" in
         _login
         _getDomainID
         _getDNSInfo
-        _searchDNSRecord
         _addDNSRecord
         _checkDNSRecord
     ;;
