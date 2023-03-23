@@ -54,7 +54,7 @@ _login() {
         -F "password=\"$freenom_passwd\"" \
         -F "token=$authToken" \
         "https://my.freenom.com/dologin.php")"
-        if ! grep -q "$(echo -e "$loginResult" | grep -E "Location: /clientarea.php\?incorrect=true|Login Details Incorrect")"; then
+        if [ "$(echo -e "$loginResult" | grep -E "Location: /clientarea.php\?incorrect=true|Login Details Incorrect")" = "" ] ; then
             break
         else
             if [ "$counter" -eq "$httpAttempts" ]; then
@@ -125,7 +125,7 @@ _addDNSRecord() {
         -F "addrecord[0][value]=${dnsToken}" \
         -F "token=$authToken" \
         "https://my.freenom.com/clientarea.php?managedns=${domain}&domainid=${domainId}")
-    if ! grep -q "$(echo -e "$addResult" | grep "<li class=\"dnssuccess\">Record added successfully</li>")"; then
+    if [ "$(echo -e "$addResult" | grep "<li class=\"dnssuccess\">Record added successfully</li>")" = "" ] ; then
         echo "[HOOK_ERROR]: DNS record was not added!"
     fi
     echo "[HOOK_INFO]: DNS record was successfully added"
